@@ -1,0 +1,1828 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none';">
+<title>Сечения многогранников</title>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--tx:#1b1f24;--mut:#667085;--ac:#2f6fed;--bd:#d9dce1;--card:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--panel:#1d2026;--tx:#e6e8ec;--mut:#9aa3b2;--ac:#6c9bff;--bd:#343a44;--card:#1d2026}}
+:root[data-theme="dark"]{--bg:#14161a;--panel:#1d2026;--tx:#e6e8ec;--mut:#9aa3b2;--ac:#6c9bff;--bd:#343a44;--card:#1d2026}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
+#langScreen,#start{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:20px;text-align:center;box-sizing:border-box}
+#start{display:none}
+#langScreen h1,#start h1{margin:0;font-size:clamp(22px,4.5vw,36px)}
+#langScreen p,#start p{margin:6px 0 0;color:var(--mut)}
+.cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.card{width:210px;padding:22px 16px;background:var(--card);border:1px solid var(--bd);border-radius:16px;color:var(--tx);cursor:pointer;font:inherit;transition:.15s}
+.card:hover{border-color:var(--ac);transform:translateY(-3px)}
+.card svg{color:var(--ac)}.card b{display:block;margin-top:10px;font-size:18px}
+.card small{display:block;margin-top:4px;color:var(--mut);font-size:13px}
+.lang-badge{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:14px;background:var(--bg);border:1px solid var(--bd);color:var(--ac);font-weight:800;font-size:20px;letter-spacing:.5px}
+.lang-bar{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+.lang-btn{padding:5px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--mut);font:600 12px/1.2 inherit;cursor:pointer;transition:.15s}
+.lang-btn:hover{border-color:var(--ac);color:var(--tx)}
+.lang-btn.active{background:var(--ac);border-color:var(--ac);color:#fff}
+#app{display:none;height:100%;flex-direction:row}
+#cv{flex:1;min-width:0;position:relative;touch-action:none;overflow:hidden}
+#cv canvas{display:block;width:100%;height:100%}
+#panel{width:310px;background:var(--panel);border-left:1px solid var(--bd);padding:16px;overflow:auto;box-sizing:border-box}
+@media(max-width:700px){#app{flex-direction:column}#panel{width:100%;max-height:42%;border-left:0;border-top:1px solid var(--bd)}}
+h2{margin:0 0 6px;font-size:19px}
+.hint{color:var(--mut);font-size:13px;margin:0 0 12px}
+.row{display:grid;grid-template-columns:34px 1fr 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px}
+.row span{font-weight:600}
+input{width:100%;box-sizing:border-box;padding:6px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+button.b{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;cursor:pointer}
+button.b.p{background:var(--ac);border-color:var(--ac);color:#fff}
+#msg{margin-top:12px;padding:10px;border-radius:10px;background:var(--bg);font-size:14px;min-height:20px}
+button:disabled{opacity:.45;cursor:default}
+.lb{position:absolute;left:0;top:0;pointer-events:none;font-weight:700;font-size:13px;line-height:1.2;padding:0 4px;border-radius:5px;background:var(--panel);border:1px solid var(--bd);color:var(--tx);will-change:transform}
+#errBanner{display:none;position:fixed;inset:0;background:var(--bg);color:var(--tx);align-items:center;justify-content:center;padding:24px;text-align:center;z-index:999}
+</style>
+</head>
+<body>
+<div id="errBanner">Не удалось загрузить 3D-библиотеку. / Failed to initialize 3D engine. / 无法加载 3D 引擎。</div>
+
+<div id="langScreen">
+  <div>
+    <h1>Выберите язык · Select Language · 选择语言</h1>
+    <p>Сечения многогранников · Polyhedron Cross-Sections · 多面体截面</p>
+  </div>
+  <div class="cards">
+    <button class="card" data-lang="ru">
+      <span class="lang-badge">RU</span>
+      <b>Русский</b>
+      <small>Сечения многогранников</small>
+    </button>
+    <button class="card" data-lang="en">
+      <span class="lang-badge">EN</span>
+      <b>English</b>
+      <small>Polyhedron Cross-Sections</small>
+    </button>
+    <button class="card" data-lang="zh">
+      <span class="lang-badge">中文</span>
+      <b>中文</b>
+      <small>多面体截面</small>
+    </button>
+  </div>
+</div>
+
+<div id="start">
+  <div><h1 id="stTitle">Сечения многогранников</h1><p id="stSub">Выберите фигуру, чтобы построить её сечение</p></div>
+  <div class="cards">
+    <button class="card" data-t="p"><svg viewBox="0 0 100 100" width="90" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M20 35h45v45H20zM35 20h45v45H35zM20 35l15-15M65 35l15-15M65 80l15-15M20 80l15-15"/></svg><b id="cardP">Параллелепипед</b></button>
+    <button class="card" data-t="t"><svg viewBox="0 0 100 100" width="90" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M50 15L15 80L85 80Z M50 15L60 62 M15 80L60 62 M85 80L60 62"/></svg><b id="cardT">Тетраэдр</b></button>
+  </div>
+  <div class="lang-bar">
+    <button class="lang-btn" data-setlang="ru">Русский</button>
+    <button class="lang-btn" data-setlang="en">English</button>
+    <button class="lang-btn" data-setlang="zh">中文</button>
+  </div>
+</div>
+
+<div id="app">
+  <div id="cv"></div>
+  <div id="panel">
+    <div class="lang-bar" style="justify-content:flex-end;margin-bottom:10px">
+      <button class="lang-btn" data-setlang="ru">RU</button>
+      <button class="lang-btn" data-setlang="en">EN</button>
+      <button class="lang-btn" data-setlang="zh">中文</button>
+    </div>
+    <div id="pe">
+      <h2 id="ttl"></h2>
+      <p class="hint" id="eh"></p>
+      <div id="inputs"></div>
+      <label id="angWrap" style="display:flex;gap:8px;align-items:flex-start;margin:10px 0 4px;font-size:14px;cursor:pointer"><input type="checkbox" id="ang" style="width:auto;margin-top:3px"><span><span id="angTitle">Менять углы при перетаскивании грани</span><br><small id="angSub" style="color:var(--mut)">Выключено: грань движется только вдоль ребра, меняется лишь его длина</small></span></label>
+      <button class="b p" id="toSec">Построить сечение →</button>
+      <button class="b" id="home">← Выбор фигуры</button>
+    </div>
+    <div id="ps" style="display:none">
+      <div id="psm"><h2 id="secTitle">Построение сечения</h2>
+      <p class="hint" id="secHint"><b id="secHintBold">Двойной клик ЛКМ (или двойной тап) по грани</b><span id="secHintRest"> — поставить точку. После 3 точек сечение строится автоматически (4-й клик начинает новое).</span><br><span id="secHintCam">ЛКМ / 1 палец — вращение камеры, ПКМ / 2 пальца — перемещение, колесо / щипок — масштаб.</span></p>
+      <div><span id="ptsLabel">Точек:</span> <b id="cnt">0/3</b></div>
+      <div id="msg">Поставьте первую точку.</div>
+      <button class="b p" id="build" style="display:none">Показать построение</button>
+      <button class="b" id="reset">Сбросить точки</button>
+      <button class="b" id="toEdit">← Настроить фигуру</button></div>
+      <div id="cons" style="display:none"><h2 id="consTitle">Ход построения</h2><p class="hint" id="cstep"></p><div id="ctext" style="min-height:110px"></div>
+        <button class="b p" id="cnext">Далее →</button><button class="b" id="cprev">← Назад</button><button class="b" id="cclose">Закрыть построение</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Встроенное автономное 3D-ядро THREE (WebGL + 3D-математика, 100% офлайн без внешних CDN)
+const THREE = (function(){
+  const DoubleSide = 2;
+
+  function makeColor(hex){
+    return {
+      hex: hex !== undefined ? hex : 0xffffff,
+      setHex(h){ this.hex = h; return this; },
+      toRGB(){
+        const h = this.hex;
+        return [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+      }
+    };
+  }
+
+  class Vector2 {
+    constructor(x = 0, y = 0){ this.x = x; this.y = y; }
+    set(x, y){ this.x = x; this.y = y; return this; }
+    copy(v){ this.x = v.x; this.y = v.y; return this; }
+    clone(){ return new Vector2(this.x, this.y); }
+  }
+
+  class Vector3 {
+    constructor(x = 0, y = 0, z = 0){ this.x = x; this.y = y; this.z = z; }
+    set(x, y, z){ this.x = x; this.y = y; this.z = z; return this; }
+    copy(v){ this.x = v.x; this.y = v.y; this.z = v.z; return this; }
+    clone(){ return new Vector3(this.x, this.y, this.z); }
+    add(v){ this.x += v.x; this.y += v.y; this.z += v.z; return this; }
+    sub(v){ this.x -= v.x; this.y -= v.y; this.z -= v.z; return this; }
+    multiplyScalar(s){ this.x *= s; this.y *= s; this.z *= s; return this; }
+    divideScalar(s){ return this.multiplyScalar(1 / s); }
+    addScaledVector(v, s){ this.x += v.x * s; this.y += v.y * s; this.z += v.z * s; return this; }
+    dot(v){ return this.x * v.x + this.y * v.y + this.z * v.z; }
+    cross(v){
+      const ax = this.x, ay = this.y, az = this.z;
+      const bx = v.x, by = v.y, bz = v.z;
+      this.x = ay * bz - az * by;
+      this.y = az * bx - ax * bz;
+      this.z = ax * by - ay * bx;
+      return this;
+    }
+    lengthSq(){ return this.x * this.x + this.y * this.y + this.z * this.z; }
+    length(){ return Math.hypot(this.x, this.y, this.z); }
+    distanceToSquared(v){
+      const dx = this.x - v.x, dy = this.y - v.y, dz = this.z - v.z;
+      return dx * dx + dy * dy + dz * dz;
+    }
+    distanceTo(v){ return Math.sqrt(this.distanceToSquared(v)); }
+    normalize(){
+      const l = this.length();
+      return l > 0 ? this.multiplyScalar(1 / l) : this.set(0, 0, 0);
+    }
+    lerp(v, a){
+      this.x += (v.x - this.x) * a;
+      this.y += (v.y - this.y) * a;
+      this.z += (v.z - this.z) * a;
+      return this;
+    }
+    applyMatrix4(m){
+      const x = this.x, y = this.y, z = this.z, e = m.elements;
+      const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15] || 1);
+      this.x = (e[0] * x + e[4] * y + e[8]  * z + e[12]) * w;
+      this.y = (e[1] * x + e[5] * y + e[9]  * z + e[13]) * w;
+      this.z = (e[2] * x + e[6] * y + e[10] * z + e[14]) * w;
+      return this;
+    }
+    setFromMatrixColumn(m, i){
+      const e = m.elements, k = i * 4;
+      this.x = e[k]; this.y = e[k + 1]; this.z = e[k + 2];
+      return this;
+    }
+    project(cam){
+      cam.updateMatrixWorld();
+      return this.applyMatrix4(cam.matrixWorldInverse).applyMatrix4(cam.projectionMatrix);
+    }
+    unproject(cam){
+      cam.updateMatrixWorld();
+      return this.applyMatrix4(cam.projectionMatrixInverse).applyMatrix4(cam.matrixWorld);
+    }
+  }
+
+  class Matrix4 {
+    constructor(){
+      this.elements = new Float32Array([
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]);
+    }
+    identity(){
+      const e = this.elements;
+      e[0]=1; e[4]=0; e[8]=0;  e[12]=0;
+      e[1]=0; e[5]=1; e[9]=0;  e[13]=0;
+      e[2]=0; e[6]=0; e[10]=1; e[14]=0;
+      e[3]=0; e[7]=0; e[11]=0; e[15]=1;
+      return this;
+    }
+    copy(m){ this.elements.set(m.elements); return this; }
+    clone(){ return new Matrix4().copy(this); }
+    makeBasis(a, b, c){
+      const e = this.elements;
+      e[0] = a.x; e[4] = b.x; e[8]  = c.x; e[12] = 0;
+      e[1] = a.y; e[5] = b.y; e[9]  = c.y; e[13] = 0;
+      e[2] = a.z; e[6] = b.z; e[10] = c.z; e[14] = 0;
+      e[3] = 0;   e[7] = 0;   e[11] = 0;   e[15] = 1;
+      return this;
+    }
+    makeTranslation(x, y, z){
+      const e = this.elements;
+      e[0]=1; e[4]=0; e[8]=0;  e[12]=x;
+      e[1]=0; e[5]=1; e[9]=0;  e[13]=y;
+      e[2]=0; e[6]=0; e[10]=1; e[14]=z;
+      e[3]=0; e[7]=0; e[11]=0; e[15]=1;
+      return this;
+    }
+    multiplyMatrices(a, b){
+      const ae = a.elements, be = b.elements, te = this.elements;
+      const a11 = ae[0], a12 = ae[4], a13 = ae[8],  a14 = ae[12];
+      const a21 = ae[1], a22 = ae[5], a23 = ae[9],  a24 = ae[13];
+      const a31 = ae[2], a32 = ae[6], a33 = ae[10], a34 = ae[14];
+      const a41 = ae[3], a42 = ae[7], a43 = ae[11], a44 = ae[15];
+
+      const b11 = be[0], b12 = be[4], b13 = be[8],  b14 = be[12];
+      const b21 = be[1], b22 = be[5], b23 = be[9],  b24 = be[13];
+      const b31 = be[2], b32 = be[6], b33 = be[10], b34 = be[14];
+      const b41 = be[3], b42 = be[7], b43 = be[11], b44 = be[15];
+
+      te[0]  = a11*b11 + a12*b21 + a13*b31 + a14*b41;
+      te[4]  = a11*b12 + a12*b22 + a13*b32 + a14*b42;
+      te[8]  = a11*b13 + a12*b23 + a13*b33 + a14*b43;
+      te[12] = a11*b14 + a12*b24 + a13*b34 + a14*b44;
+
+      te[1]  = a21*b11 + a22*b21 + a23*b31 + a24*b41;
+      te[5]  = a21*b12 + a22*b22 + a23*b32 + a24*b42;
+      te[9]  = a21*b13 + a22*b23 + a23*b33 + a24*b43;
+      te[13] = a21*b14 + a22*b24 + a23*b34 + a24*b44;
+
+      te[2]  = a31*b11 + a32*b21 + a33*b31 + a34*b41;
+      te[6]  = a31*b12 + a32*b22 + a33*b32 + a34*b42;
+      te[10] = a31*b13 + a32*b23 + a33*b33 + a34*b43;
+      te[14] = a31*b14 + a32*b24 + a33*b34 + a34*b44;
+
+      te[3]  = a41*b11 + a42*b21 + a43*b31 + a44*b41;
+      te[7]  = a41*b12 + a42*b22 + a43*b32 + a44*b42;
+      te[11] = a41*b13 + a42*b23 + a43*b33 + a44*b43;
+      te[15] = a41*b14 + a42*b24 + a43*b34 + a44*b44;
+      return this;
+    }
+    determinant(){
+      const te = this.elements;
+      const n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3];
+      const n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7];
+      const n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11];
+      const n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15];
+      const t11 = n23*n34*n42 - n24*n33*n42 + n24*n32*n43 - n22*n34*n43 - n23*n32*n44 + n22*n33*n44;
+      const t12 = n14*n33*n42 - n13*n34*n42 - n14*n32*n43 + n12*n34*n43 + n13*n32*n44 - n12*n33*n44;
+      const t13 = n13*n24*n42 - n14*n23*n42 + n14*n22*n43 - n12*n24*n43 - n13*n22*n44 + n12*n23*n44;
+      const t14 = n14*n23*n32 - n13*n24*n32 - n14*n22*n33 + n12*n24*n33 + n13*n22*n34 - n12*n23*n34;
+      return n11*t11 + n21*t12 + n31*t13 + n41*t14;
+    }
+    invert(){
+      const te = this.elements;
+      const n11 = te[0], n21 = te[1], n31 = te[2], n41 = te[3];
+      const n12 = te[4], n22 = te[5], n32 = te[6], n42 = te[7];
+      const n13 = te[8], n23 = te[9], n33 = te[10], n43 = te[11];
+      const n14 = te[12], n24 = te[13], n34 = te[14], n44 = te[15];
+
+      const t11 = n23*n34*n42 - n24*n33*n42 + n24*n32*n43 - n22*n34*n43 - n23*n32*n44 + n22*n33*n44;
+      const t12 = n14*n33*n42 - n13*n34*n42 - n14*n32*n43 + n12*n34*n43 + n13*n32*n44 - n12*n33*n44;
+      const t13 = n13*n24*n42 - n14*n23*n42 + n14*n22*n43 - n12*n24*n43 - n13*n22*n44 + n12*n23*n44;
+      const t14 = n14*n23*n32 - n13*n24*n32 - n14*n22*n33 + n12*n24*n33 + n13*n22*n34 - n12*n23*n34;
+
+      const det = n11*t11 + n21*t12 + n31*t13 + n41*t14;
+      if (det === 0) return this.identity();
+      const di = 1 / det;
+
+      te[0]  = t11 * di;
+      te[1]  = (n24*n33*n41 - n23*n34*n41 - n24*n31*n43 + n21*n34*n43 + n23*n31*n44 - n21*n33*n44) * di;
+      te[2]  = (n22*n34*n41 - n24*n32*n41 + n24*n31*n42 - n21*n34*n42 - n22*n31*n44 + n21*n32*n44) * di;
+      te[3]  = (n23*n32*n41 - n22*n33*n41 - n23*n31*n42 + n21*n33*n42 + n22*n31*n43 - n21*n32*n43) * di;
+
+      te[4]  = t12 * di;
+      te[5]  = (n13*n34*n41 - n14*n33*n41 + n14*n31*n43 - n11*n34*n43 - n13*n31*n44 + n11*n33*n44) * di;
+      te[6]  = (n14*n32*n41 - n12*n34*n41 - n14*n31*n42 + n11*n34*n42 + n12*n31*n44 - n11*n32*n44) * di;
+      te[7]  = (n12*n33*n41 - n13*n32*n41 + n13*n31*n42 - n11*n33*n42 - n12*n31*n43 + n11*n32*n43) * di;
+
+      te[8]  = t13 * di;
+      te[9]  = (n14*n23*n41 - n13*n24*n41 - n14*n21*n43 + n11*n24*n43 + n13*n21*n44 - n11*n23*n44) * di;
+      te[10] = (n12*n24*n41 - n14*n22*n41 + n14*n21*n42 - n11*n24*n42 - n12*n21*n44 + n11*n22*n44) * di;
+      te[11] = (n13*n22*n41 - n12*n23*n41 - n13*n21*n42 + n11*n23*n42 + n12*n21*n43 - n11*n22*n43) * di;
+
+      te[12] = t14 * di;
+      te[13] = (n13*n24*n31 - n14*n23*n31 + n14*n21*n33 - n11*n24*n33 - n13*n21*n34 + n11*n23*n34) * di;
+      te[14] = (n14*n22*n31 - n12*n24*n31 - n14*n21*n32 + n11*n24*n32 + n12*n21*n34 - n11*n22*n34) * di;
+      te[15] = (n12*n23*n31 - n13*n22*n31 + n13*n21*n32 - n11*n23*n32 - n12*n21*n33 + n11*n22*n33) * di;
+      return this;
+    }
+    makePerspective(fovDeg, aspect, near, far){
+      const f = 1 / Math.tan((fovDeg * Math.PI / 180) / 2);
+      const nf = 1 / (near - far);
+      const e = this.elements;
+      e[0] = f / (aspect || 1); e[4] = 0; e[8]  = 0;                 e[12] = 0;
+      e[1] = 0;                 e[5] = f; e[9]  = 0;                 e[13] = 0;
+      e[2] = 0;                 e[6] = 0; e[10] = (far + near) * nf; e[14] = (2 * far * near) * nf;
+      e[3] = 0;                 e[7] = 0; e[11] = -1;                e[15] = 0;
+      return this;
+    }
+    lookAt(eye, target, up){
+      const z = eye.clone().sub(target);
+      if (z.lengthSq() === 0) z.z = 1;
+      z.normalize();
+      const x = up.clone().cross(z);
+      if (x.lengthSq() === 0){
+        if (Math.abs(up.z) === 1) z.x += 0.0001;
+        else z.z += 0.0001;
+        z.normalize();
+        x.copy(up).cross(z);
+      }
+      x.normalize();
+      const y = z.clone().cross(x);
+      const e = this.elements;
+      e[0] = x.x; e[4] = y.x; e[8]  = z.x; e[12] = eye.x;
+      e[1] = x.y; e[5] = y.y; e[9]  = z.y; e[13] = eye.y;
+      e[2] = x.z; e[6] = y.z; e[10] = z.z; e[14] = eye.z;
+      e[3] = 0;   e[7] = 0;   e[11] = 0;   e[15] = 1;
+      return this;
+    }
+  }
+
+  class Plane {
+    constructor(normal = new Vector3(1, 0, 0), constant = 0){
+      this.normal = normal;
+      this.constant = constant;
+    }
+    setFromNormalAndCoplanarPoint(normal, point){
+      this.normal.copy(normal).normalize();
+      this.constant = -point.dot(this.normal);
+      return this;
+    }
+  }
+
+  class BufferAttribute {
+    constructor(array, itemSize){
+      this.array = (array instanceof Float32Array) ? array : new Float32Array(array);
+      this.itemSize = itemSize;
+      this.count = this.array.length / itemSize;
+      this.needsUpdate = true;
+    }
+    setXYZ(i, x, y, z){
+      const k = i * this.itemSize;
+      this.array[k] = x;
+      this.array[k + 1] = y;
+      this.array[k + 2] = z;
+      return this;
+    }
+    clone(){
+      return new BufferAttribute(new Float32Array(this.array), this.itemSize);
+    }
+  }
+
+  class Float32BufferAttribute extends BufferAttribute {
+    constructor(array, itemSize){
+      super(array instanceof Float32Array ? array : new Float32Array(array), itemSize);
+    }
+  }
+
+  class BufferGeometry {
+    constructor(){
+      this.attributes = {};
+      this.index = null;
+      this._posBuf = null;
+      this._distBuf = null;
+      this._idxBuf = null;
+      this._gl = null;
+      this._sphereRadius = 0;
+    }
+    setAttribute(name, attr){
+      this.attributes[name] = attr;
+      return this;
+    }
+    setIndex(idx){
+      this.index = (idx instanceof Uint16Array) ? idx : new Uint16Array(idx);
+      this._idxNeedsUpdate = true;
+      return this;
+    }
+    setFromPoints(pts){
+      const arr = new Float32Array(pts.length * 3);
+      for (let i = 0; i < pts.length; i++){
+        arr[3 * i]     = pts[i].x;
+        arr[3 * i + 1] = pts[i].y;
+        arr[3 * i + 2] = pts[i].z;
+      }
+      return this.setAttribute('position', new BufferAttribute(arr, 3));
+    }
+    computeBoundingSphere(){ return this; }
+    clone(){
+      const g = new BufferGeometry();
+      for (const k in this.attributes) g.attributes[k] = this.attributes[k].clone();
+      if (this.index) g.setIndex(new Uint16Array(this.index));
+      g._sphereRadius = this._sphereRadius;
+      return g;
+    }
+    dispose(){
+      if (this._gl){
+        if (this._posBuf) this._gl.deleteBuffer(this._posBuf);
+        if (this._distBuf) this._gl.deleteBuffer(this._distBuf);
+        if (this._idxBuf) this._gl.deleteBuffer(this._idxBuf);
+      }
+      this._posBuf = this._distBuf = this._idxBuf = null;
+    }
+  }
+
+  class SphereGeometry extends BufferGeometry {
+    constructor(radius = 1, widthSegments = 16, heightSegments = 12){
+      super();
+      this._sphereRadius = radius;
+      const w = Math.max(3, Math.floor(widthSegments));
+      const h = Math.max(2, Math.floor(heightSegments));
+      const verts = [], indices = [], grid = [];
+      let idx = 0;
+      for (let iy = 0; iy <= h; iy++){
+        const row = [], v = iy / h, theta = v * Math.PI;
+        for (let ix = 0; ix <= w; ix++){
+          const u = ix / w, phi = u * Math.PI * 2;
+          verts.push(
+            -radius * Math.cos(phi) * Math.sin(theta),
+             radius * Math.cos(theta),
+             radius * Math.sin(phi) * Math.sin(theta)
+          );
+          row.push(idx++);
+        }
+        grid.push(row);
+      }
+      for (let iy = 0; iy < h; iy++){
+        for (let ix = 0; ix < w; ix++){
+          const a = grid[iy][ix + 1], b = grid[iy][ix], c = grid[iy + 1][ix], d = grid[iy + 1][ix + 1];
+          if (iy !== 0) indices.push(a, b, d);
+          if (iy !== h - 1) indices.push(b, c, d);
+        }
+      }
+      this.setAttribute('position', new BufferAttribute(new Float32Array(verts), 3));
+      this.setIndex(indices);
+    }
+  }
+
+  class MeshBasicMaterial {
+    constructor(opts = {}){
+      this.color = makeColor(opts.color);
+      this.transparent = !!opts.transparent;
+      this.opacity = opts.opacity !== undefined ? opts.opacity : 1;
+      this.side = opts.side || 0;
+      this.depthWrite = opts.depthWrite !== undefined ? opts.depthWrite : true;
+    }
+    dispose(){}
+  }
+
+  class LineBasicMaterial {
+    constructor(opts = {}){
+      this.color = makeColor(opts.color);
+      this.transparent = !!opts.transparent;
+      this.opacity = opts.opacity !== undefined ? opts.opacity : 1;
+      this.isDashed = false;
+    }
+    dispose(){}
+  }
+
+  class LineDashedMaterial {
+    constructor(opts = {}){
+      this.color = makeColor(opts.color);
+      this.dashSize = opts.dashSize || 0.15;
+      this.gapSize = opts.gapSize || 0.1;
+      this.isDashed = true;
+    }
+    dispose(){}
+  }
+
+  class Object3D {
+    constructor(){
+      this.position = new Vector3(0, 0, 0);
+      this.visible = true;
+      this.userData = {};
+      this.children = [];
+      this.parent = null;
+    }
+    add(...objs){
+      for (const o of objs){
+        if (!o) continue;
+        if (o.parent) o.parent.remove(o);
+        o.parent = this;
+        this.children.push(o);
+      }
+      return this;
+    }
+    remove(...objs){
+      for (const o of objs){
+        const i = this.children.indexOf(o);
+        if (i !== -1){
+          o.parent = null;
+          this.children.splice(i, 1);
+        }
+      }
+      return this;
+    }
+    clear(){
+      for (const c of this.children) c.parent = null;
+      this.children.length = 0;
+      return this;
+    }
+    getWorldPosition(target = new Vector3()){
+      target.set(0, 0, 0);
+      let cur = this;
+      while (cur){
+        target.add(cur.position);
+        cur = cur.parent;
+      }
+      return target;
+    }
+    worldToLocal(v){
+      const wp = this.getWorldPosition(new Vector3());
+      return v.sub(wp);
+    }
+  }
+
+  class Group extends Object3D {}
+  class Scene extends Object3D {}
+
+  class Mesh extends Object3D {
+    constructor(geometry, material){
+      super();
+      this.geometry = geometry;
+      this.material = material;
+      this._kind = 'mesh';
+    }
+  }
+
+  class Line extends Object3D {
+    constructor(geometry, material){
+      super();
+      this.geometry = geometry;
+      this.material = material;
+      this._kind = 'line';
+    }
+    computeLineDistances(){
+      const pos = this.geometry && this.geometry.attributes.position;
+      if (!pos) return this;
+      const arr = pos.array, n = pos.count, dists = new Float32Array(n);
+      let d = 0;
+      for (let i = 1; i < n; i++){
+        const dx = arr[3*i] - arr[3*(i-1)];
+        const dy = arr[3*i+1] - arr[3*(i-1)+1];
+        const dz = arr[3*i+2] - arr[3*(i-1)+2];
+        d += Math.hypot(dx, dy, dz);
+        dists[i] = d;
+      }
+      this.geometry.setAttribute('lineDistance', new BufferAttribute(dists, 1));
+      return this;
+    }
+  }
+
+  class LineLoop extends Line {
+    constructor(geometry, material){
+      super(geometry, material);
+      this._kind = 'lineloop';
+    }
+  }
+
+  class LineSegments extends Line {
+    constructor(geometry, material){
+      super(geometry, material);
+      this._kind = 'linesegments';
+    }
+  }
+
+  class PerspectiveCamera extends Object3D {
+    constructor(fov = 45, aspect = 1, near = 0.1, far = 200){
+      super();
+      this.fov = fov;
+      this.aspect = aspect;
+      this.near = near;
+      this.far = far;
+      this._lookTarget = new Vector3(0, 0, 0);
+      this._up = new Vector3(0, 1, 0);
+      this.matrixWorld = new Matrix4();
+      this.matrixWorldInverse = new Matrix4();
+      this.projectionMatrix = new Matrix4();
+      this.projectionMatrixInverse = new Matrix4();
+      this.updateProjectionMatrix();
+      this.updateMatrixWorld();
+    }
+    updateProjectionMatrix(){
+      this.projectionMatrix.makePerspective(this.fov, this.aspect, this.near, this.far);
+      this.projectionMatrixInverse.copy(this.projectionMatrix).invert();
+    }
+    updateMatrixWorld(){
+      this.matrixWorld.lookAt(this.position, this._lookTarget, this._up);
+      this.matrixWorldInverse.copy(this.matrixWorld).invert();
+    }
+    lookAt(x, y, z){
+      if (typeof x === 'object' && x !== null) this._lookTarget.copy(x);
+      else this._lookTarget.set(x, y, z);
+      this.updateMatrixWorld();
+    }
+    getWorldDirection(target = new Vector3()){
+      this.updateMatrixWorld();
+      const e = this.matrixWorld.elements;
+      return target.set(-e[8], -e[9], -e[10]).normalize();
+    }
+  }
+
+  class Raycaster {
+    constructor(){
+      this.ray = {
+        origin: new Vector3(),
+        direction: new Vector3(0, 0, -1),
+        intersectPlane(plane, target = new Vector3()){
+          const denom = plane.normal.dot(this.direction);
+          if (Math.abs(denom) < 1e-8) return null;
+          const t = -(this.origin.dot(plane.normal) + plane.constant) / denom;
+          if (t < 0) return null;
+          return target.copy(this.origin).addScaledVector(this.direction, t);
+        }
+      };
+    }
+    setFromCamera(ndc, camera){
+      camera.updateMatrixWorld();
+      this.ray.origin.copy(camera.position);
+      this.ray.direction.set(ndc.x, ndc.y, 0.5).unproject(camera).sub(this.ray.origin).normalize();
+    }
+    intersectObject(obj){
+      const hits = [];
+      if (!obj || !obj.visible || !obj.geometry) return hits;
+      const geom = obj.geometry;
+      const wp = obj.getWorldPosition(new Vector3());
+      const orig = this.ray.origin, dir = this.ray.direction;
+
+      if (geom._sphereRadius > 0){
+        const r = geom._sphereRadius;
+        const lx = orig.x - wp.x, ly = orig.y - wp.y, lz = orig.z - wp.z;
+        const b = lx * dir.x + ly * dir.y + lz * dir.z;
+        const c = lx * lx + ly * ly + lz * lz - r * r;
+        const disc = b * b - c;
+        if (disc >= 0){
+          const sq = Math.sqrt(disc);
+          const t = (-b - sq > 1e-5) ? (-b - sq) : (-b + sq);
+          if (t > 1e-5){
+            hits.push({
+              distance: t,
+              point: orig.clone().addScaledVector(dir, t),
+              object: obj,
+              faceIndex: 0
+            });
+          }
+        }
+        return hits;
+      }
+
+      const posAttr = geom.attributes.position;
+      if (!posAttr) return hits;
+      const pa = posAttr.array;
+      const idx = geom.index;
+      const triCount = idx ? (idx.length / 3) : (posAttr.count / 3);
+
+      for (let ti = 0; ti < triCount; ti++){
+        const i0 = idx ? idx[3 * ti]     : 3 * ti;
+        const i1 = idx ? idx[3 * ti + 1] : 3 * ti + 1;
+        const i2 = idx ? idx[3 * ti + 2] : 3 * ti + 2;
+
+        const v0x = pa[3*i0] + wp.x, v0y = pa[3*i0+1] + wp.y, v0z = pa[3*i0+2] + wp.z;
+        const v1x = pa[3*i1] + wp.x, v1y = pa[3*i1+1] + wp.y, v1z = pa[3*i1+2] + wp.z;
+        const v2x = pa[3*i2] + wp.x, v2y = pa[3*i2+1] + wp.y, v2z = pa[3*i2+2] + wp.z;
+
+        const e1x = v1x - v0x, e1y = v1y - v0y, e1z = v1z - v0z;
+        const e2x = v2x - v0x, e2y = v2y - v0y, e2z = v2z - v0z;
+
+        const hx = dir.y * e2z - dir.z * e2y;
+        const hy = dir.z * e2x - dir.x * e2z;
+        const hz = dir.x * e2y - dir.y * e2x;
+
+        const a = e1x * hx + e1y * hy + e1z * hz;
+        if (Math.abs(a) < 1e-8) continue;
+        const f = 1 / a;
+
+        const sx = orig.x - v0x, sy = orig.y - v0y, sz = orig.z - v0z;
+        const u = f * (sx * hx + sy * hy + sz * hz);
+        if (u < 0 || u > 1) continue;
+
+        const qx = sy * e1z - sz * e1y;
+        const qy = sz * e1x - sx * e1z;
+        const qz = sx * e1y - sy * e1x;
+
+        const v = f * (dir.x * qx + dir.y * qy + dir.z * qz);
+        if (v < 0 || u + v > 1) continue;
+
+        const t = f * (e2x * qx + e2y * qy + e2z * qz);
+        if (t > 1e-5){
+          hits.push({
+            distance: t,
+            point: orig.clone().addScaledVector(dir, t),
+            object: obj,
+            faceIndex: ti
+          });
+        }
+      }
+      hits.sort((a, b) => a.distance - b.distance);
+      return hits;
+    }
+    intersectObjects(objs){
+      const all = [];
+      for (const o of objs){
+        const h = this.intersectObject(o);
+        for (let i = 0; i < h.length; i++) all.push(h[i]);
+      }
+      all.sort((a, b) => a.distance - b.distance);
+      return all;
+    }
+  }
+
+  class WebGLRenderer {
+    constructor(opts = {}){
+      this.domElement = document.createElement('canvas');
+      this._pixelRatio = 1;
+      this._width = 300;
+      this._height = 150;
+      const glOpts = { antialias: opts.antialias !== false, alpha: opts.alpha !== false };
+      const gl = this.domElement.getContext('webgl', glOpts) || this.domElement.getContext('experimental-webgl', glOpts);
+      this._gl = gl;
+      if (gl) this._initGL(gl);
+      else this._ctx2d = this.domElement.getContext('2d');
+      this._vpMat = new Matrix4();
+      this._modelMat = new Matrix4();
+      this._mvpMat = new Matrix4();
+    }
+    _initGL(gl){
+      const vsSrc = `
+        attribute vec3 aPos;
+        attribute float aDist;
+        uniform mat4 uMVP;
+        varying float vDist;
+        void main(){
+          vDist = aDist;
+          gl_Position = uMVP * vec4(aPos, 1.0);
+        }
+      `;
+      const fsSrc = `
+        precision mediump float;
+        uniform vec4 uColor;
+        uniform int uDashed;
+        uniform float uDash;
+        uniform float uGap;
+        varying float vDist;
+        void main(){
+          if (uDashed == 1){
+            if (mod(vDist, uDash + uGap) > uDash) discard;
+          }
+          gl_FragColor = uColor;
+        }
+      `;
+      const compile = (type, src) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return s;
+      };
+      const prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+      gl.linkProgram(prog);
+      gl.useProgram(prog);
+      this._prog = prog;
+      this._aPos = gl.getAttribLocation(prog, 'aPos');
+      this._aDist = gl.getAttribLocation(prog, 'aDist');
+      this._uMVP = gl.getUniformLocation(prog, 'uMVP');
+      this._uColor = gl.getUniformLocation(prog, 'uColor');
+      this._uDashed = gl.getUniformLocation(prog, 'uDashed');
+      this._uDash = gl.getUniformLocation(prog, 'uDash');
+      this._uGap = gl.getUniformLocation(prog, 'uGap');
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(1.0, 1.0);
+    }
+    setPixelRatio(r){
+      this._pixelRatio = r || 1;
+    }
+    setSize(w, h){
+      this._width = w;
+      this._height = h;
+      this.domElement.width = Math.max(1, Math.floor(w * this._pixelRatio));
+      this.domElement.height = Math.max(1, Math.floor(h * this._pixelRatio));
+      this.domElement.style.width = w + 'px';
+      this.domElement.style.height = h + 'px';
+      if (this._gl) this._gl.viewport(0, 0, this.domElement.width, this.domElement.height);
+    }
+    render(scene, camera){
+      camera.updateMatrixWorld();
+      this._vpMat.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+
+      const opaque = [], transp = [];
+      const collect = (node, px, py, pz) => {
+        if (!node || !node.visible) return;
+        const wx = px + node.position.x, wy = py + node.position.y, wz = pz + node.position.z;
+        if (node._kind && node.geometry && node.material){
+          const item = { node, wx, wy, wz };
+          if (node.material.transparent) transp.push(item);
+          else opaque.push(item);
+        }
+        for (let i = 0; i < node.children.length; i++){
+          collect(node.children[i], wx, wy, wz);
+        }
+      };
+      collect(scene, 0, 0, 0);
+
+      if (this._gl){
+        const gl = this._gl;
+        gl.useProgram(this._prog);
+        gl.depthMask(true);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.disable(gl.BLEND);
+        for (let i = 0; i < opaque.length; i++) this._drawGL(gl, opaque[i]);
+
+        if (transp.length){
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          for (let i = 0; i < transp.length; i++) this._drawGL(gl, transp[i]);
+          gl.depthMask(true);
+          gl.disable(gl.BLEND);
+        }
+      } else if (this._ctx2d){
+        this._render2D([...transp, ...opaque], camera);
+      }
+    }
+    _drawGL(gl, item){
+      const { node, wx, wy, wz } = item;
+      const geom = node.geometry, mat = node.material;
+      const posAttr = geom.attributes.position;
+      if (!posAttr || posAttr.count === 0) return;
+
+      geom._gl = gl;
+      if (!geom._posBuf){
+        geom._posBuf = gl.createBuffer();
+        posAttr.needsUpdate = true;
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, geom._posBuf);
+      if (posAttr.needsUpdate){
+        gl.bufferData(gl.ARRAY_BUFFER, posAttr.array, gl.DYNAMIC_DRAW);
+        posAttr.needsUpdate = false;
+      }
+      if (this._aPos >= 0){
+        gl.enableVertexAttribArray(this._aPos);
+        gl.vertexAttribPointer(this._aPos, 3, gl.FLOAT, false, 0, 0);
+      }
+
+      const distAttr = geom.attributes.lineDistance;
+      if (mat.isDashed && distAttr){
+        if (!geom._distBuf){
+          geom._distBuf = gl.createBuffer();
+          distAttr.needsUpdate = true;
+        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, geom._distBuf);
+        if (distAttr.needsUpdate){
+          gl.bufferData(gl.ARRAY_BUFFER, distAttr.array, gl.STATIC_DRAW);
+          distAttr.needsUpdate = false;
+        }
+        if (this._aDist >= 0){
+          gl.enableVertexAttribArray(this._aDist);
+          gl.vertexAttribPointer(this._aDist, 1, gl.FLOAT, false, 0, 0);
+        }
+        gl.uniform1i(this._uDashed, 1);
+        gl.uniform1f(this._uDash, mat.dashSize || 0.15);
+        gl.uniform1f(this._uGap, mat.gapSize || 0.1);
+      } else {
+        if (this._aDist >= 0){
+          gl.disableVertexAttribArray(this._aDist);
+          gl.vertexAttrib1f(this._aDist, 0);
+        }
+        gl.uniform1i(this._uDashed, 0);
+      }
+
+      this._modelMat.makeTranslation(wx, wy, wz);
+      this._mvpMat.multiplyMatrices(this._vpMat, this._modelMat);
+      gl.uniformMatrix4fv(this._uMVP, false, this._mvpMat.elements);
+
+      const rgb = mat.color.toRGB();
+      const alpha = mat.transparent ? (mat.opacity !== undefined ? mat.opacity : 1) : 1;
+      gl.uniform4f(this._uColor, rgb[0], rgb[1], rgb[2], alpha);
+
+      gl.depthMask(mat.depthWrite !== false);
+      if (mat.side === DoubleSide) gl.disable(gl.CULL_FACE);
+      else { gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK); }
+
+      if (node._kind === 'mesh'){
+        if (geom.index){
+          if (!geom._idxBuf){
+            geom._idxBuf = gl.createBuffer();
+            geom._idxNeedsUpdate = true;
+          }
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, geom._idxBuf);
+          if (geom._idxNeedsUpdate){
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geom.index, gl.STATIC_DRAW);
+            geom._idxNeedsUpdate = false;
+          }
+          gl.drawElements(gl.TRIANGLES, geom.index.length, gl.UNSIGNED_SHORT, 0);
+        } else {
+          gl.drawArrays(gl.TRIANGLES, 0, posAttr.count);
+        }
+      } else if (node._kind === 'linesegments'){
+        gl.drawArrays(gl.LINES, 0, posAttr.count);
+      } else if (node._kind === 'lineloop'){
+        gl.drawArrays(gl.LINE_LOOP, 0, posAttr.count);
+      } else if (node._kind === 'line'){
+        gl.drawArrays(gl.LINE_STRIP, 0, posAttr.count);
+      }
+    }
+    _render2D(items, camera){
+      const ctx = this._ctx2d, w = this.domElement.width, h = this.domElement.height, pr = this._pixelRatio;
+      ctx.clearRect(0, 0, w, h);
+      const proj = (x, y, z) => {
+        const v = new Vector3(x, y, z).project(camera);
+        return { x: (v.x + 1) * 0.5 * w, y: (1 - v.y) * 0.5 * h, z: v.z };
+      };
+      for (const { node, wx, wy, wz } of items){
+        const geom = node.geometry, mat = node.material, posAttr = geom.attributes.position;
+        if (!posAttr) continue;
+        const pa = posAttr.array;
+        const hex = '#' + mat.color.hex.toString(16).padStart(6, '0');
+        ctx.save();
+        ctx.globalAlpha = mat.transparent ? mat.opacity : 1;
+        ctx.strokeStyle = hex;
+        ctx.fillStyle = hex;
+        ctx.lineWidth = 1.5 * pr;
+        if (geom._sphereRadius > 0){
+          const p = proj(wx, wy, wz);
+          if (p.z >= -1 && p.z <= 1){
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, Math.max(3, geom._sphereRadius * 42 * pr), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (node._kind === 'mesh'){
+          const idx = geom.index, tc = idx ? idx.length / 3 : posAttr.count / 3;
+          for (let t = 0; t < tc; t++){
+            const i0 = idx ? idx[3*t] : 3*t, i1 = idx ? idx[3*t+1] : 3*t+1, i2 = idx ? idx[3*t+2] : 3*t+2;
+            const p0 = proj(pa[3*i0]+wx, pa[3*i0+1]+wy, pa[3*i0+2]+wz);
+            const p1 = proj(pa[3*i1]+wx, pa[3*i1+1]+wy, pa[3*i1+2]+wz);
+            const p2 = proj(pa[3*i2]+wx, pa[3*i2+1]+wy, pa[3*i2+2]+wz);
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            ctx.closePath(); ctx.fill();
+          }
+        } else {
+          if (mat.isDashed) ctx.setLineDash([6 * pr, 4 * pr]);
+          const n = posAttr.count;
+          if (node._kind === 'linesegments'){
+            ctx.beginPath();
+            for (let i = 0; i < n; i += 2){
+              const p0 = proj(pa[3*i]+wx, pa[3*i+1]+wy, pa[3*i+2]+wz);
+              const p1 = proj(pa[3*i+3]+wx, pa[3*i+4]+wy, pa[3*i+5]+wz);
+              ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y);
+            }
+            ctx.stroke();
+          } else {
+            ctx.beginPath();
+            for (let i = 0; i < n; i++){
+              const p = proj(pa[3*i]+wx, pa[3*i+1]+wy, pa[3*i+2]+wz);
+              if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+            }
+            if (node._kind === 'lineloop') ctx.closePath();
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  return {
+    DoubleSide,
+    Vector2,
+    Vector3,
+    Matrix4,
+    Plane,
+    BufferAttribute,
+    Float32BufferAttribute,
+    BufferGeometry,
+    SphereGeometry,
+    MeshBasicMaterial,
+    LineBasicMaterial,
+    LineDashedMaterial,
+    Group,
+    Scene,
+    Mesh,
+    Line,
+    LineLoop,
+    LineSegments,
+    PerspectiveCamera,
+    Raycaster,
+    WebGLRenderer
+  };
+})();
+
+</script>
+<script>
+(function(){
+if(typeof THREE==='undefined'){document.getElementById('errBanner').style.display='flex';return;}
+
+const I18N = {
+  ru: {
+    docTitle: 'Сечения многогранников',
+    stTitle: 'Сечения многогранников',
+    stSub: 'Выберите фигуру, чтобы построить её сечение',
+    para: 'Параллелепипед',
+    tetra: 'Тетраэдр',
+    ehPara: 'Введите векторы рёбер или потяните ЛКМ за оранжевую вершину либо за грань (рёбра грани растягиваются вместе с ней). ЛКМ по пустому месту — вращение, ПКМ — перемещение.',
+    ehTetra: 'Введите координаты вершин или потяните ЛКМ за оранжевую вершину. ЛКМ по пустому месту — вращение, ПКМ — перемещение.',
+    angTitle: 'Менять углы при перетаскивании грани',
+    angSub: 'Выключено: грань движется только вдоль ребра, меняется лишь его длина',
+    toSec: 'Построить сечение →',
+    home: '← Выбор фигуры',
+    secTitle: 'Построение сечения',
+    secHintBold: 'Двойной клик ЛКМ (или двойной тап) по грани',
+    secHintRest: ' — поставить точку. После 3 точек сечение строится автоматически (4-й клик начинает новое).',
+    secHintCam: 'ЛКМ / 1 палец — вращение камеры, ПКМ / 2 пальца — перемещение, колесо / щипок — масштаб.',
+    ptsLabel: 'Точек:',
+    pt1: 'Поставьте первую точку.',
+    pt2: 'Поставьте вторую точку.',
+    pt3: 'Поставьте третью точку.',
+    collinear: 'Три точки оказались на одной прямой — выберите другую третью точку.',
+    noSection: 'Плоскость касается фигуры, но не образует многоугольного сечения.',
+    secBuiltPrefix: 'Сечение построено: ',
+    secBuiltArea: ', площадь ≈ ',
+    secBuiltUnit: ' ед².',
+    polyNames: { 3: 'треугольник', 4: 'четырёхугольник', 5: 'пятиугольник', 6: 'шестиугольник' },
+    polyN: n => n + '-угольник',
+    buildBtn: 'Показать построение',
+    resetBtn: 'Сбросить точки',
+    toEditBtn: '← Настроить фигуру',
+    consTitle: 'Ход построения',
+    cnext: 'Далее →',
+    cprev: '← Назад',
+    cclose: 'Закрыть построение',
+    stepCounter: (i, tot) => 'Шаг ' + i + ' из ' + tot,
+    step0: 'Даны три точки M1, M2, M3, лежащие на гранях фигуры. Секущая плоскость проходит через них. Чтобы найти сечение, определим, где эта плоскость пересекает рёбра фигуры.',
+    stepFaceTrace: (ptsNames, faceName, newNames) =>
+      'Точки ' + ptsNames + ' лежат в плоскости грани ' + faceName + '. Проводим через них прямую — след секущей плоскости на этой грани' +
+      (newNames ? ' — и находим её пересечения с рёбрами грани: ' + newNames + '.' : '. Новых точек на рёбрах она не даёт.'),
+    stepAuxPoint: (lineAB, faceName, auxName) =>
+      'Прямая ' + lineAB + ' лежит в секущей плоскости. Продлеваем её до пересечения с плоскостью грани ' + faceName + ' и получаем вспомогательную точку ' + auxName + '. Она принадлежит и секущей плоскости, и плоскости этой грани, значит лежит на следе сечения на этой грани.',
+    stepFinal: polyNames =>
+      'Последовательно соединяем точки ' + polyNames + ' отрезками внутри граней. Получаем сечение.'
+  },
+  en: {
+    docTitle: 'Polyhedron Cross-Sections',
+    stTitle: 'Polyhedron Cross-Sections',
+    stSub: 'Select a shape to construct its cross-section',
+    para: 'Parallelepiped',
+    tetra: 'Tetrahedron',
+    ehPara: 'Enter edge vectors or drag an orange vertex or a face with LMB (face edges stretch with it). Drag empty space with LMB to rotate, RMB to pan.',
+    ehTetra: 'Enter vertex coordinates or drag an orange vertex with LMB. Drag empty space with LMB to rotate, RMB to pan.',
+    angTitle: 'Change angles when dragging a face',
+    angSub: 'Off: the face moves only along the edge, changing only its length',
+    toSec: 'Construct section →',
+    home: '← Select shape',
+    secTitle: 'Section Construction',
+    secHintBold: 'Double-click LMB (or double-tap) on a face',
+    secHintRest: ' to place a point. After 3 points the section is built automatically (a 4th click starts a new one).',
+    secHintCam: 'LMB / 1 finger — rotate camera, RMB / 2 fingers — pan, wheel / pinch — zoom.',
+    ptsLabel: 'Points:',
+    pt1: 'Place the first point.',
+    pt2: 'Place the second point.',
+    pt3: 'Place the third point.',
+    collinear: 'The three points are collinear — choose another third point.',
+    noSection: 'The plane touches the shape but does not form a polygonal cross-section.',
+    secBuiltPrefix: 'Section constructed: ',
+    secBuiltArea: ', area ≈ ',
+    secBuiltUnit: ' sq. units.',
+    polyNames: { 3: 'triangle', 4: 'quadrilateral', 5: 'pentagon', 6: 'hexagon' },
+    polyN: n => n + '-gon',
+    buildBtn: 'Show construction steps',
+    resetBtn: 'Reset points',
+    toEditBtn: '← Customize shape',
+    consTitle: 'Construction Steps',
+    cnext: 'Next →',
+    cprev: '← Back',
+    cclose: 'Close construction',
+    stepCounter: (i, tot) => 'Step ' + i + ' of ' + tot,
+    step0: 'Given three points M1, M2, M3 on the faces of the polyhedron. The cutting plane passes through them. To find the cross-section, we determine where this plane intersects the edges of the shape.',
+    stepFaceTrace: (ptsNames, faceName, newNames) =>
+      'Points ' + ptsNames + ' lie in the plane of face ' + faceName + '. Draw a line through them — the trace of the cutting plane on this face' +
+      (newNames ? ' — and find its intersections with the edges of the face: ' + newNames + '.' : '. It yields no new points on the edges.'),
+    stepAuxPoint: (lineAB, faceName, auxName) =>
+      'Line ' + lineAB + ' lies in the cutting plane. Extend it to intersect the plane of face ' + faceName + ' to get auxiliary point ' + auxName + '. It belongs to both the cutting plane and the plane of this face, so it lies on the section trace on this face.',
+    stepFinal: polyNames =>
+      'Connect the points ' + polyNames + ' sequentially with segments across the faces to obtain the cross-section.'
+  },
+  zh: {
+    docTitle: '多面体截面',
+    stTitle: '多面体截面',
+    stSub: '选择一个立体图形以构建其截面',
+    para: '平行六面体',
+    tetra: '四面体',
+    ehPara: '输入棱向量，或使用鼠标左键拖动橙色顶点或面（面的棱会随之伸缩）。左键拖动空白处旋转视角，右键平移。',
+    ehTetra: '输入顶点坐标，或使用鼠标左键拖动橙色顶点。左键拖动空白处旋转视角，右键平移。',
+    angTitle: '拖动面时改变角度',
+    angSub: '关闭：面仅沿棱方向移动，只改变棱的长度',
+    toSec: '构建截面 →',
+    home: '← 选择图形',
+    secTitle: '构建截面',
+    secHintBold: '在面上双击鼠标左键（或双击屏幕）',
+    secHintRest: '放置一个点。放置 3 个点后将自动构建截面（第 4 次双击开始新的截面）。',
+    secHintCam: '左键 / 单指 — 旋转视角，右键 / 双指 — 平移，滚轮 / 双指缩放 — 缩放。',
+    ptsLabel: '点数：',
+    pt1: '请放置第一个点。',
+    pt2: '请放置第二个点。',
+    pt3: '请放置第三个点。',
+    collinear: '三个点在同一直线上 — 请重新选择第三个点。',
+    noSection: '平面与图形接触，但未形成多边形截面。',
+    secBuiltPrefix: '截面已构建：',
+    secBuiltArea: '，面积 ≈ ',
+    secBuiltUnit: ' 平方单位。',
+    polyNames: { 3: '三角形', 4: '四边形', 5: '五边形', 6: '六边形' },
+    polyN: n => n + '边形',
+    buildBtn: '显示作图步骤',
+    resetBtn: '重置点',
+    toEditBtn: '← 调整图形',
+    consTitle: '作图步骤',
+    cnext: '下一步 →',
+    cprev: '← 上一步',
+    cclose: '关闭作图步骤',
+    stepCounter: (i, tot) => '第 ' + i + ' 步，共 ' + tot + ' 步',
+    step0: '已知位于多面体面上的三个点 M1、M2、M3。截面经过这三个点。为了求出截面，我们需要确定该平面与多面体各棱的交点。',
+    stepFaceTrace: (ptsNames, faceName, newNames) =>
+      '点 ' + ptsNames + ' 位于面 ' + faceName + ' 的平面内。过这些点作一条直线（即截面在该面上的迹线）' +
+      (newNames ? '，并求出它与该面各棱的交点：' + newNames + '。' : '，它在棱上没有产生新的交点。'),
+    stepAuxPoint: (lineAB, faceName, auxName) =>
+      '直线 ' + lineAB + ' 位于截面内。将其延长并与面 ' + faceName + ' 所在的平面相交，得到辅助点 ' + auxName + '。该点同时属于截面和该面所在的平面，因此位于该面的截面迹线上。',
+    stepFinal: polyNames =>
+      '在各面内依次用线段连接点 ' + polyNames + '，即可得到所求截面。'
+  }
+};
+
+let lang = 'ru';
+let msgState = { type: 'pt1' };
+
+const $=s=>document.querySelector(s), V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const darkQuery=matchMedia('(prefers-color-scheme: dark)');
+const getLineCol=()=>darkQuery.matches?0xe6e8ec:0x1b1f24;
+
+const wrap=$('#cv'), renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+wrap.appendChild(renderer.domElement);
+
+const cvs=renderer.domElement, scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(45,1,.1,200);
+const group=new THREE.Group(), secGroup=new THREE.Group(), consGroup=new THREE.Group();
+scene.add(group);
+
+const cam={th:.8,ph:1.1,r:8,target:V(0,0,0)};
+let fig={}, mode='edit', appActive=false, faceMesh, lines, spheres=[], faces=[], triFace=[], inputs=[], pts=[], drag=null, labels=[], steps=[], si=0, lastSec=null;
+const FP=[[0,2,6,4],[1,3,7,5],[0,1,5,4],[2,3,7,6],[0,1,3,2],[4,5,7,6]], FT=[[0,1,2],[0,1,3],[0,2,3],[1,2,3]], NM=['a','b','c'];
+const MIN_COORD=-15, MAX_COORD=15, tempVec=V(0,0,0);
+
+darkQuery.addEventListener('change',()=>{if(lines&&lines.material)lines.material.color.setHex(getLineCol())});
+
+function updateMsgDOM(){
+  const t = I18N[lang];
+  const msgEl = $('#msg');
+  if (msgState.type === 'built'){
+    const N = msgState.N;
+    const polyName = t.polyNames[N] || t.polyN(N);
+    msgEl.textContent = t.secBuiltPrefix;
+    const b = document.createElement('b');
+    b.textContent = polyName;
+    msgEl.appendChild(b);
+    msgEl.appendChild(document.createTextNode(t.secBuiltArea + msgState.area + t.secBuiltUnit));
+  } else {
+    msgEl.textContent = t[msgState.type] || t.pt1;
+  }
+}
+
+function setLang(l){
+  if(!I18N[l])return;
+  lang = l;
+  document.documentElement.lang = l;
+  const t = I18N[l];
+  document.title = t.docTitle;
+  $('#stTitle').textContent = t.stTitle;
+  $('#stSub').textContent = t.stSub;
+  $('#cardP').textContent = t.para;
+  $('#cardT').textContent = t.tetra;
+  $('#angTitle').textContent = t.angTitle;
+  $('#angSub').textContent = t.angSub;
+  $('#toSec').textContent = t.toSec;
+  $('#home').textContent = t.home;
+  $('#secTitle').textContent = t.secTitle;
+  $('#secHintBold').textContent = t.secHintBold;
+  $('#secHintRest').textContent = t.secHintRest;
+  $('#secHintCam').textContent = t.secHintCam;
+  $('#ptsLabel').textContent = t.ptsLabel;
+  $('#build').textContent = t.buildBtn;
+  $('#reset').textContent = t.resetBtn;
+  $('#toEdit').textContent = t.toEditBtn;
+  $('#consTitle').textContent = t.consTitle;
+  $('#cnext').textContent = t.cnext;
+  $('#cprev').textContent = t.cprev;
+  $('#cclose').textContent = t.cclose;
+
+  if(fig.type){
+    $('#ttl').textContent = fig.type==='p' ? t.para : t.tetra;
+    $('#eh').textContent = fig.type==='p' ? t.ehPara : t.ehTetra;
+  }
+  updateMsgDOM();
+
+  if($('#cons').style.display !== 'none' && lastSec){
+    steps = buildSteps();
+    const curStep = Math.min(si, steps.length - 1);
+    showStep(curStep);
+  }
+
+  document.querySelectorAll('[data-setlang]').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.setlang === l);
+  });
+}
+
+document.querySelectorAll('[data-lang]').forEach(btn=>{
+  btn.onclick=()=>{
+    setLang(btn.dataset.lang);
+    $('#langScreen').style.display='none';
+    $('#start').style.display='flex';
+  };
+});
+
+document.querySelectorAll('[data-setlang]').forEach(btn=>{
+  btn.onclick=()=>setLang(btn.dataset.setlang);
+});
+
+function disposeGroup(grp){
+  while(grp.children.length>0){
+    const obj=grp.children[0];
+    if(obj.children&&obj.children.length)disposeGroup(obj);
+    if(obj.geometry)obj.geometry.dispose();
+    if(obj.material){
+      if(Array.isArray(obj.material))obj.material.forEach(m=>m.dispose());
+      else obj.material.dispose();
+    }
+    grp.remove(obj);
+  }
+}
+
+function resize(){
+  const w=wrap.clientWidth,h=wrap.clientHeight;
+  if(!w||!h)return;
+  renderer.setSize(w,h);
+  camera.aspect=w/h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize);
+
+(function loop(){
+  if(appActive){
+    camera.position.set(
+      cam.target.x+cam.r*Math.sin(cam.ph)*Math.sin(cam.th),
+      cam.target.y+cam.r*Math.cos(cam.ph),
+      cam.target.z+cam.r*Math.sin(cam.ph)*Math.cos(cam.th)
+    );
+    camera.lookAt(cam.target);
+    renderer.render(scene,camera);
+    updLabels();
+  }
+  requestAnimationFrame(loop);
+})();
+
+const getV=()=>{
+  if(fig.type==='t')return fig.T;
+  const r=[];
+  for(let n=0;n<8;n++)r.push(fig.O.clone().addScaledVector(fig.a,n&1).addScaledVector(fig.b,(n>>1)&1).addScaledVector(fig.c,(n>>2)&1));
+  return r;
+};
+const getE=()=>{
+  const n=fig.type==='p'?8:4,e=[];
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)if(fig.type==='t'||[1,2,4].includes(i^j))e.push([i,j]);
+  return e;
+};
+
+function isValidFig(){
+  if(fig.type==='p'){
+    const M=new THREE.Matrix4().makeBasis(fig.a,fig.b,fig.c);
+    return Math.abs(M.determinant())>1e-3;
+  }else{
+    const [A,B,C,D]=fig.T;
+    const vol=Math.abs(B.clone().sub(A).cross(C.clone().sub(A)).dot(D.clone().sub(A)));
+    return vol>1e-3;
+  }
+}
+
+function pick(t){
+  fig=t==='p'
+    ?{type:'p',O:V(-1.5,-1,-1),a:V(3,0,0),b:V(0,2,0),c:V(0,0,2)}
+    :{type:'t',T:[V(-1.5,-1,-1),V(1.5,-1,-1),V(0,-1,1.5),V(0,1.8,0)]};
+  group.position.set(0,0,0);
+  cam.th=.8;cam.ph=1.1;cam.r=8;cam.target.set(0,0,0);
+  $('#start').style.display='none';
+  $('#app').style.display='flex';
+  appActive=true;
+  resize();
+  build();
+  setMode('edit');
+}
+document.querySelectorAll('.card[data-t]').forEach(b=>b.onclick=()=>pick(b.dataset.t));
+$('#home').onclick=()=>{
+  clearSec();
+  drag=null;
+  appActive=false;
+  $('#app').style.display='none';
+  $('#start').style.display='flex';
+};
+
+function build(){
+  disposeGroup(secGroup);
+  disposeGroup(consGroup);
+  group.remove(secGroup,consGroup);
+  disposeGroup(group);
+
+  faces=fig.type==='p'?FP:FT;
+  const vs=getV(),idx=[];
+  triFace=[];
+  faces.forEach((f,fi)=>{for(let k=1;k<f.length-1;k++){idx.push(f[0],f[k],f[k+1]);triFace.push(fi)}});
+
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(vs.length*3),3));
+  g.setIndex(idx);
+  faceMesh=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0x4c8bf5,transparent:true,opacity:.22,side:THREE.DoubleSide,depthWrite:false}));
+
+  const lg=new THREE.BufferGeometry();
+  lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(getE().length*6),3));
+  lines=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:getLineCol()}));
+
+  const sphGeo=new THREE.SphereGeometry(.14,16,12);
+  spheres=vs.map((_,i)=>{
+    const m=new THREE.Mesh(sphGeo.clone(),new THREE.MeshBasicMaterial({color:0xf5a623}));
+    m.userData.i=i;
+    return m;
+  });
+  sphGeo.dispose();
+
+  group.add(faceMesh,lines,...spheres,secGroup,consGroup);
+
+  const box=$('#inputs');
+  box.textContent='';
+  inputs=[];
+  const defs=fig.type==='p'?[['a⃗',fig.a],['b⃗',fig.b],['c⃗',fig.c]]:['A','B','C','D'].map((n,i)=>[n,fig.T[i]]);
+  defs.forEach(([nm,vec])=>{
+    const r=document.createElement('div');
+    r.className='row';
+    const sp=document.createElement('span');
+    sp.textContent=nm;
+    r.appendChild(sp);
+    ['x','y','z'].forEach(ax=>{
+      const el=document.createElement('input');
+      el.type='number';
+      el.step='.1';
+      el.min=String(MIN_COORD);
+      el.max=String(MAX_COORD);
+      el.oninput=()=>{
+        const v=parseFloat(el.value);
+        if(!Number.isFinite(v))return;
+        const clamped=Math.max(MIN_COORD,Math.min(MAX_COORD,v));
+        const prev=vec[ax];
+        vec[ax]=clamped;
+        if(!isValidFig()){vec[ax]=prev;return;}
+        refresh(false);
+      };
+      r.appendChild(el);
+      inputs.push({el,vec,ax});
+    });
+    box.appendChild(r);
+  });
+  $('#angWrap').style.display=fig.type==='p'?'flex':'none';
+  const t = I18N[lang];
+  $('#ttl').textContent=fig.type==='p'?t.para:t.tetra;
+  $('#eh').textContent=fig.type==='p'?t.ehPara:t.ehTetra;
+  refresh(true);
+}
+
+function refresh(sync){
+  const vs=getV(),pa=faceMesh.geometry.attributes.position;
+  vs.forEach((v,i)=>{pa.setXYZ(i,v.x,v.y,v.z);spheres[i].position.copy(v)});
+  pa.needsUpdate=true;
+  faceMesh.geometry.computeBoundingSphere();
+  const la=lines.geometry.attributes.position;
+  getE().forEach(([i,j],k)=>{la.setXYZ(2*k,vs[i].x,vs[i].y,vs[i].z);la.setXYZ(2*k+1,vs[j].x,vs[j].y,vs[j].z)});
+  la.needsUpdate=true;
+  lines.geometry.computeBoundingSphere();
+  if(sync)inputs.forEach(o=>{if(document.activeElement!==o.el)o.el.value=+o.vec[o.ax].toFixed(2)});
+}
+
+function setMode(m){
+  mode=m;
+  clearSec();
+  spheres.forEach(s=>s.visible=m==='edit');
+  $('#pe').style.display=m==='edit'?'':'none';
+  $('#ps').style.display=m==='sec'?'':'none';
+}
+$('#toSec').onclick=()=>setMode('sec');
+$('#toEdit').onclick=()=>setMode('edit');
+$('#reset').onclick=clearSec;
+
+// ---- Управление мышью и тачскрином ----
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+const activePtrs=new Map();
+let lastTapTime=0, lastTapX=0, lastTapY=0, pinchDist=0, lastTouchTime=0, lastPlaceTime=0;
+
+function setRay(clientX,clientY){
+  const r=cvs.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  ndc.set((clientX-r.left)/r.width*2-1,-((clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera);
+}
+
+cvs.addEventListener('contextmenu',e=>e.preventDefault());
+cvs.addEventListener('wheel',e=>{
+  e.preventDefault();
+  cam.r=Math.min(30,Math.max(3,cam.r*Math.exp(e.deltaY*.001)));
+},{passive:false});
+
+function startDrag(kind,id,pt){
+  const s=fig.type==='p'?{O:fig.O.clone(),a:fig.a.clone(),b:fig.b.clone(),c:fig.c.clone()}:{v:fig.T[id].clone()};
+  drag={mode:kind,id,s,p0:pt.clone(),plane:new THREE.Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(V(0,0,0)),pt)};
+}
+
+function panCamera(dx,dy){
+  if(!cvs.clientHeight)return;
+  const k=2*cam.r*Math.tan(22.5*Math.PI/180)/cvs.clientHeight;
+  cam.target.addScaledVector(V(0,0,0).setFromMatrixColumn(camera.matrixWorld,0),-dx*k)
+            .addScaledVector(V(0,0,0).setFromMatrixColumn(camera.matrixWorld,1),dy*k);
+}
+
+cvs.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch')lastTouchTime=performance.now();
+  try{cvs.setPointerCapture(e.pointerId)}catch(_){}
+  activePtrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(activePtrs.size===2){
+    const ptsArr=Array.from(activePtrs.values());
+    pinchDist=Math.hypot(ptsArr[0].x-ptsArr[1].x,ptsArr[0].y-ptsArr[1].y);
+    drag={mode:'pinch',x:(ptsArr[0].x+ptsArr[1].x)/2,y:(ptsArr[0].y+ptsArr[1].y)/2};
+    return;
+  }
+
+  setRay(e.clientX,e.clientY);
+  drag={mode:'cam',x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};
+  if(e.button===2){drag.mode='move';return;}
+  if(e.button!==0||mode!=='edit')return;
+  const hv=ray.intersectObjects(spheres)[0];
+  if(hv){startDrag('v',hv.object.userData.i,hv.point);return;}
+  if(fig.type==='p'){
+    const hf=ray.intersectObject(faceMesh)[0];
+    if(hf)startDrag('f',triFace[hf.faceIndex],hf.point);
+  }
+});
+
+cvs.addEventListener('pointermove',e=>{
+  if(e.pointerType==='touch')lastTouchTime=performance.now();
+  if(activePtrs.has(e.pointerId)){
+    activePtrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  }
+
+  if(activePtrs.size===2&&drag&&drag.mode==='pinch'){
+    const ptsArr=Array.from(activePtrs.values());
+    const dist=Math.hypot(ptsArr[0].x-ptsArr[1].x,ptsArr[0].y-ptsArr[1].y);
+    const cx=(ptsArr[0].x+ptsArr[1].x)/2, cy=(ptsArr[0].y+ptsArr[1].y)/2;
+    if(pinchDist>10&&dist>10){
+      cam.r=Math.min(30,Math.max(3,cam.r*(pinchDist/dist)));
+    }
+    pinchDist=dist;
+    panCamera(cx-drag.x,cy-drag.y);
+    drag.x=cx;drag.y=cy;
+    return;
+  }
+
+  setRay(e.clientX,e.clientY);
+  if(!drag){
+    if(mode==='edit'){
+      cvs.style.cursor=(ray.intersectObjects(spheres)[0]||(fig.type==='p'&&ray.intersectObject(faceMesh)[0]))?'grab':'default';
+    }
+    return;
+  }
+  if(drag.mode==='cam'||drag.mode==='move'){
+    const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+    drag.x=e.clientX;drag.y=e.clientY;
+    if(drag.mode==='cam'){
+      cam.th-=dx*.008;
+      cam.ph=Math.min(3.05,Math.max(.1,cam.ph-dy*.008));
+    }else{
+      panCamera(dx,dy);
+    }
+    return;
+  }
+  const hit=V(0,0,0);
+  if(!ray.ray.intersectPlane(drag.plane,hit))return;
+  const d=hit.sub(drag.p0);
+  if(drag.mode==='v'){
+    if(fig.type==='t'){
+      const prev=fig.T[drag.id].clone();
+      fig.T[drag.id].copy(drag.s.v).add(d);
+      if(!isValidFig())fig.T[drag.id].copy(prev);
+    }else{
+      dragParaVertex(d);
+    }
+  }else if(drag.mode==='f'){
+    dragParaFace(d);
+  }
+  refresh(true);
+});
+
+function endPointer(e){
+  if(e.pointerType==='touch')lastTouchTime=performance.now();
+  activePtrs.delete(e.pointerId);
+  if(e.pointerType==='touch'&&mode==='sec'&&activePtrs.size===0&&drag&&drag.mode==='cam'){
+    const moved=Math.hypot(e.clientX-(drag.startX||0),e.clientY-(drag.startY||0));
+    const now=performance.now();
+    if(moved<12){
+      if(now-lastTapTime<350&&Math.hypot(e.clientX-lastTapX,e.clientY-lastTapY)<24){
+        lastTapTime=0;
+        placeSectionPoint(e.clientX,e.clientY);
+      }else{
+        lastTapTime=now;lastTapX=e.clientX;lastTapY=e.clientY;
+      }
+    }
+  }
+  if(activePtrs.size===0)drag=null;
+}
+cvs.addEventListener('pointerup',endPointer);
+cvs.addEventListener('pointercancel',endPointer);
+
+function dragParaFace(d){
+  const s=drag.s,ax=NM[drag.id>>1],side=drag.id&1;
+  if(!$('#ang').checked){
+    const u=s[ax].clone().normalize();
+    d=u.multiplyScalar(d.dot(u));
+  }
+  const nv=side?s[ax].clone().add(d):s[ax].clone().sub(d);
+  if(nv.length()<.2)return;
+  const prevO=fig.O.clone(), prevAx=fig[ax].clone();
+  if(!side)fig.O.copy(s.O).add(d);
+  fig[ax].copy(nv);
+  if(!isValidFig()){fig.O.copy(prevO);fig[ax].copy(prevAx);}
+}
+
+function dragParaVertex(d){
+  const s=drag.s,n=drag.id,bits=[n&1,(n>>1)&1,(n>>2)&1],M=new THREE.Matrix4().makeBasis(s.a,s.b,s.c);
+  if(Math.abs(M.determinant())<1e-6)return;
+  const c=d.clone().applyMatrix4(M.clone().invert()),W=s.O.clone(),nvs=[];
+  NM.forEach((k,i)=>{
+    W.addScaledVector(s[k],1-bits[i]);
+    const sg=bits[i]?1:-1,f=Math.max(.15,Math.min(5,1+sg*[c.x,c.y,c.z][i]));
+    nvs.push(s[k].clone().multiplyScalar(f));
+  });
+  const O=W.clone();
+  NM.forEach((k,i)=>{O.addScaledVector(nvs[i],-(1-bits[i]));fig[k].copy(nvs[i])});
+  fig.O.copy(O);
+}
+
+// ---- Построение сечения ----
+function placeSectionPoint(clientX,clientY){
+  if(mode!=='sec'||$('#cons').style.display!=='none')return;
+  const now=performance.now();
+  if(now-lastPlaceTime<250)return;
+  setRay(clientX,clientY);
+  const h=ray.intersectObject(faceMesh)[0];
+  if(!h)return;
+  if(pts.length>=3)clearSec();
+  const p=group.worldToLocal(h.point.clone());
+  if(pts.some(q=>q.distanceTo(p)<1e-3))return;
+  lastPlaceTime=now;
+  pts.push(p);
+  const m=new THREE.Mesh(new THREE.SphereGeometry(.1,14,10),new THREE.MeshBasicMaterial({color:0xe8553d}));
+  m.position.copy(p);
+  secGroup.add(m);
+  $('#cnt').textContent=pts.length+'/3';
+  if(pts.length<3){
+    msgState = { type: pts.length===1 ? 'pt2' : 'pt3' };
+    updateMsgDOM();
+  }else{
+    computeSection();
+  }
+}
+
+cvs.addEventListener('dblclick',e=>{
+  if(e.button!==0)return;
+  if(performance.now()-lastTouchTime<800)return;
+  placeSectionPoint(e.clientX,e.clientY);
+});
+
+function clearSec(){
+  closeCons();
+  $('#build').style.display='none';
+  disposeGroup(secGroup);
+  pts=[];
+  lastSec=null;
+  $('#cnt').textContent='0/3';
+  msgState = { type: 'pt1' };
+  updateMsgDOM();
+}
+
+function computeSection(){
+  const [p,q,r]=pts,n=q.clone().sub(p).cross(r.clone().sub(p));
+  if(n.length()<1e-5){
+    pts.pop();
+    const lastSph=secGroup.children[secGroup.children.length-1];
+    if(lastSph){
+      if(lastSph.geometry)lastSph.geometry.dispose();
+      if(lastSph.material)lastSph.material.dispose();
+      secGroup.remove(lastSph);
+    }
+    $('#cnt').textContent=pts.length+'/3';
+    msgState = { type: 'collinear' };
+    updateMsgDOM();
+    return;
+  }
+  n.normalize();
+  const vs=getV(),dist=vs.map(v=>n.dot(v.clone().sub(p))),out=[],eps=1e-4;
+  const add=v=>{if(!out.some(o=>o.distanceTo(v)<1e-3))out.push(v)};
+  getE().forEach(([i,j])=>{
+    const di=dist[i],dj=dist[j],oi=Math.abs(di)<eps,oj=Math.abs(dj)<eps;
+    if(oi)add(vs[i].clone());
+    if(oj)add(vs[j].clone());
+    if(!oi&&!oj&&di*dj<0)add(vs[i].clone().lerp(vs[j],di/(di-dj)));
+  });
+  if(out.length<3){
+    msgState = { type: 'noSection' };
+    updateMsgDOM();
+    return;
+  }
+  const c=out.reduce((a,v)=>a.add(v),V(0,0,0)).divideScalar(out.length),
+        u=out[0].clone().sub(c).normalize(),
+        w=n.clone().cross(u);
+  out.sort((a,b)=>Math.atan2(a.clone().sub(c).dot(w),a.clone().sub(c).dot(u))-Math.atan2(b.clone().sub(c).dot(w),b.clone().sub(c).dot(u)));
+  const pos=[],N=out.length;
+  let area=0;
+  for(let i=0;i<N;i++){
+    const a=out[i],b=out[(i+1)%N];
+    pos.push(c.x,c.y,c.z,a.x,a.y,a.z,b.x,b.y,b.z);
+    area+=a.clone().sub(c).cross(b.clone().sub(c)).length()/2;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  secGroup.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0xe8553d,transparent:true,opacity:.55,side:THREE.DoubleSide,depthWrite:false})));
+  secGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(out),new THREE.LineBasicMaterial({color:0xe8553d})));
+  msgState = { type: 'built', N, area: area.toFixed(2) };
+  updateMsgDOM();
+  lastSec={out,n,p};
+  $('#build').style.display='';
+}
+
+// ---- Пошаговый показ построения ----
+const LET='ABCDEFGH';
+function lab(t,p,col){
+  const el=document.createElement('div');
+  el.className='lb';
+  el.textContent=t;
+  if(col)el.style.color=col;
+  wrap.appendChild(el);
+  labels.push({el,p:p.clone()});
+}
+function updLabels(){
+  if(!labels.length)return;
+  const w=wrap.clientWidth,h=wrap.clientHeight;
+  labels.forEach(l=>{
+    tempVec.copy(l.p).add(group.position).project(camera);
+    const vis=tempVec.z>=-1&&tempVec.z<=1;
+    if(vis){
+      l.el.style.transform='translate('+((tempVec.x+1)/2*w)+'px,'+((1-tempVec.y)/2*h)+'px) translate(-50%,-140%)';
+      l.el.style.display='';
+    }else{
+      l.el.style.display='none';
+    }
+  });
+}
+
+function buildSteps(){
+  const t = I18N[lang];
+  const {out,n,p}=lastSec,vs=getV(),dist=vs.map(v=>n.dot(v.clone().sub(p)));
+  const fpl=faces.map(f=>({n:vs[f[1]].clone().sub(vs[f[0]]).cross(vs[f[2]].clone().sub(vs[f[0]])).normalize(),a:vs[f[0]]}));
+  const inPl=(f,P)=>Math.abs(fpl[f].n.dot(P.clone().sub(fpl[f].a)))<2e-3,
+        fname=f=>faces[f].map(i=>LET[i]).join('');
+  const K=pts.map((q,i)=>({p:q.clone(),name:'M'+(i+1)})),S=[],done=new Set(),
+        CM=0xe8553d,CX=0x9b59b6,CK=0x2e9e5b,CT=0x2e86de;
+  let ai=0,ki=0;
+  const find=P=>K.find(k=>k.p.distanceTo(P)<2e-3),names=a=>a.map(k=>k.name).join(', ');
+  const span=a=>{
+    let p0=a[0],p1=a[1],maxD=0;
+    for(let i=0;i<a.length;i++)for(let j=i+1;j<a.length;j++){
+      const d2=a[i].distanceToSquared(a[j]);
+      if(d2>maxD){maxD=d2;p0=a[i];p1=a[j];}
+    }
+    const d=p1.clone().sub(p0).normalize();
+    let lo=0,hi=0;
+    a.forEach(P=>{const tc=P.clone().sub(p0).dot(d);lo=Math.min(lo,tc);hi=Math.max(hi,tc)});
+    return[p0.clone().addScaledVector(d,lo),p0.clone().addScaledVector(d,hi)];
+  };
+  const pt=(k,c)=>({t:'pt',p:k.p,name:k.name,c}),ln=(a,c,dash)=>{const s=span(a);return{t:'l',a:s[0],b:s[1],c,dash}};
+  S.push({text:t.step0,items:K.map(k=>pt(k,CM))});
+  const complete=()=>out.every(o=>find(o));
+  for(let it=0;it<30&&!complete();it++){
+    let f=-1;
+    for(let i=0;i<faces.length;i++)if(!done.has(i)&&K.filter(k=>inPl(i,k.p)).length>=2){f=i;break;}
+    if(f>=0){
+      done.add(f);
+      const T=K.filter(k=>inPl(f,k.p)),nw=[],all=T.map(k=>k.p),fr=faces[f];
+      fr.forEach((vi,j)=>{
+        const wj=fr[(j+1)%fr.length],di=dist[vi],dj=dist[wj];
+        let P=null;
+        if(Math.abs(di)<1e-4)P=vs[vi];
+        else if(Math.abs(dj)>=1e-4&&di*dj<0)P=vs[vi].clone().lerp(vs[wj],di/(di-dj));
+        if(P){
+          all.push(P);
+          if(!find(P)){
+            const k={p:P.clone(),name:'K'+(++ki)};
+            K.push(k);nw.push(k);
+          }
+        }
+      });
+      S.push({
+        text:t.stepFaceTrace(names(T), fname(f), nw.length ? names(nw) : ''),
+        items:[ln(all,CT,false),...nw.map(k=>pt(k,CK))]
+      });
+      continue;
+    }
+    let best=null;
+    for(let i=0;i<K.length;i++)for(let j=i+1;j<K.length;j++)for(let g=0;g<faces.length;g++){
+      if(done.has(g)||!K.some(k=>inPl(g,k.p)))continue;
+      const A=K[i].p,B=K[j].p;
+      if(inPl(g,A)||inPl(g,B))continue;
+      const dv=B.clone().sub(A),den=fpl[g].n.dot(dv);
+      if(Math.abs(den)<1e-5)continue;
+      const X=A.clone().addScaledVector(dv,fpl[g].n.dot(fpl[g].a.clone().sub(A))/den);
+      if(find(X)||!inPl(g,X))continue;
+      const sc=X.distanceTo(fpl[g].a);
+      if(!best||sc<best.sc)best={X,i,j,g,sc};
+    }
+    if(!best)break;
+    const k={p:best.X,name:'X'+(++ai)},A=K[best.i],B=K[best.j];
+    K.push(k);
+    S.push({
+      text:t.stepAuxPoint(A.name+B.name, fname(best.g), k.name),
+      items:[ln([A.p,B.p,k.p],CX,true),pt(k,CX)]
+    });
+  }
+  const poly=out.map(o=>{let k=find(o);if(!k){k={p:o.clone(),name:'K'+(++ki)};K.push(k)}return k});
+  S.push({
+    text:t.stepFinal(names(poly)),
+    items:poly.map((k,i)=>({t:'l',a:k.p,b:poly[(i+1)%poly.length].p,c:CM,dash:false})),
+    last:true
+  });
+  return S;
+}
+
+function showStep(i){
+  si=i;
+  disposeGroup(consGroup);
+  labels.forEach(l=>l.el.remove());
+  labels=[];
+  getV().forEach((v,k)=>lab(LET[k],v));
+  steps.slice(0,i+1).forEach(s=>s.items.forEach(it=>{
+    if(it.t==='pt'){
+      const m=new THREE.Mesh(new THREE.SphereGeometry(.09,12,8),new THREE.MeshBasicMaterial({color:it.c}));
+      m.position.copy(it.p);
+      consGroup.add(m);
+      lab(it.name,it.p,'#'+it.c.toString(16).padStart(6,'0'));
+    }else{
+      const l=new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([it.a,it.b]),
+        it.dash?new THREE.LineDashedMaterial({color:it.c,dashSize:.15,gapSize:.1}):new THREE.LineBasicMaterial({color:it.c})
+      );
+      if(it.dash)l.computeLineDistances();
+      consGroup.add(l);
+    }
+  }));
+  secGroup.visible=i===steps.length-1;
+  $('#cstep').textContent=I18N[lang].stepCounter(i+1, steps.length);
+  $('#ctext').textContent=steps[i].text;
+  $('#cnext').disabled=i===steps.length-1;
+  $('#cprev').disabled=i===0;
+}
+
+function closeCons(){
+  disposeGroup(consGroup);
+  labels.forEach(l=>l.el.remove());
+  labels=[];
+  secGroup.visible=true;
+  $('#cons').style.display='none';
+  $('#psm').style.display='';
+}
+
+$('#build').onclick=()=>{
+  if(!lastSec)return;
+  steps=buildSteps();
+  $('#psm').style.display='none';
+  $('#cons').style.display='';
+  showStep(0);
+};
+$('#cnext').onclick=()=>{if(si<steps.length-1)showStep(si+1)};
+$('#cprev').onclick=()=>{if(si>0)showStep(si-1)};
+$('#cclose').onclick=closeCons;
+
+setLang('ru');
+})();
+</script>
+</body>
+</html>
