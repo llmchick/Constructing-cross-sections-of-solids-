@@ -1,3 +1,4 @@
+# КОД И README.md полностью сгенерированы нейросетью. Использовались модели Sonnet 5.5 и Gemini 4 Argon
 # Constructing-cross-sections-of-solids-
 # 📐 Сечения многогранников | Polyhedron Cross-Sections | 多面体截面
 
